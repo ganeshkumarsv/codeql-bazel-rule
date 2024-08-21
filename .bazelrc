@@ -1,0 +1,130 @@
+# ------------------------------------------------------- #
+# WARNING PLEASE REQUEST A REVIEW ON CHANGES TO THIS FILE
+#
+# If you're not careful about which commands you assign
+# a flag to, Bazel will thrash the cache between runs of
+# different commands, aka running build then test will
+# invalidate the cache.
+#
+# Bazel will let you know most of the time, but sometimes
+# it's silent. [1] Here are some common flags that do this:
+# * --define
+# * --repo_env
+# * --action_env
+#
+# https://github.com/bazelbuild/bazel/issues/10902
+#
+# Bazel command options inheritance rules:
+# * Every command inherits from `common`
+# * Inherit from `build`:
+#    * test
+#    * run
+#    * clean
+#    * mobile-install
+#    * info
+#    * print_action
+#    * config
+#    * cquery
+#    * aquery
+# * Inherit from `test`:
+#    * `coverage`
+# * `query`, `fetch`, and `sync` do not inherit from any command
+# ------------------------------------------------------- #
+#
+# For when you forget what the format of the file is -> https://docs.bazel.build/versions/main/guide.html
+
+# Use a static value for `PATH` and does not inherit `LD_LIBRARY_PATH`. Doesn't let environment
+# variables like `PATH` sneak into the build, which can cause massive cache misses when they change.
+# Use `--action_env=ENV_VARIABLE` if you want to inherit specific environment variables from the
+# client, but note that doing so can prevent cross-user caching if a shared cache is used.
+# Docs: https://bazel.build/reference/command-line-reference#flag--incompatible_strict_action_env
+build --incompatible_strict_action_env
+
+# Attempt to build & test every target whose prerequisites were successfully built.
+# Docs: https://bazel.build/docs/user-manual#keep-going
+build --keep_going
+
+# Output test errors to stderr so users don't have to `cat` or open test failure log files when test
+# fail. This makes the log noiser in exchange for reducing the time-to-feedback on test failures for
+# users.
+# Docs: https://bazel.build/docs/user-manual#test-output
+test --test_output=errors
+
+# Show the output files created by builds that requested more than one target. This helps users
+# locate the build outputs in more cases. For example, when building a single target `//foo:a`
+# bazel will list the files produced by the target. But when building multiple targets like
+# `bzl build //foo:a //foo:b` or `bzl build //...`, bazel will not list any of the generated files.
+# This changes threshold to 100 targets. Builds with more than 100 targets also won't list generated
+# files.
+# Docs: https://bazel.build/docs/user-manual#show-result
+build --show_result=100
+
+# Whether to make direct file system calls to create symlink trees. This allows spaces in filenames
+# which are inputs to actions.
+build --experimental_inprocess_symlink_creation
+
+# Includes more complete info on proto descriptor sets so that tooling can produce more accurate
+# documentation and generated code.
+build --experimental_proto_descriptor_sets_include_source_info
+
+# Bazel picks up host-OS-specific config lines from bazelrc files. For example, if the host OS is
+# Linux and you run bazel build, Bazel picks up lines starting with build:linux. Supported OS
+# identifiers are `linux`, `macos`, `windows`, `freebsd`, and `openbsd`. Enabling this flag is
+# equivalent to using `--config=linux` on Linux, `--config=windows` on Windows, etc.
+# Docs: https://bazel.build/reference/command-line-reference#flag--enable_platform_specific_config
+common --enable_platform_specific_config
+
+# Cache path directives recommended by uber/hermetic_cc_toolchain
+# See https://github.com/uber/hermetic_cc_toolchain/releases/tag/v3.0.1
+build:linux --sandbox_add_mount_pair=/tmp
+build:macos --sandbox_add_mount_pair=/var/tmp
+build:windows --sandbox_add_mount_pair=C:\Temp
+
+# prevent bazel from including homebrew-installed protobuf headers
+build:macos --sandbox_block_path=/usr/local/include
+
+# When true, Bazel will no longer allow using cc_configure from @bazel_tools.
+# Please see https://github.com/bazelbuild/bazel/issues/10134 for details and
+# migration instructions.
+common --incompatible_use_cc_configure_from_rules_cc
+
+# TODO: configure only for release builds
+# allows stamping builds
+
+import %workspace%/tools/bazelrc/langs.bazelrc
+import %workspace%/tools/bazelrc/ci.bazelrc
+import %workspace%/tools/bazelrc/defines.bazelrc
+import %workspace%/tools/bazelrc/cross.bazelrc
+import %workspace%/tools/bazelrc/debug.bazelrc
+import %workspace%/tools/bazelrc/experimental.bazelrc
+import %workspace%/tools/bazelrc/lockness.bazelrc
+import %workspace%/tools/bazelrc/remote.bazelrc
+import %workspace%/tools/bazelrc/warnings.bazelrc
+
+#
+#TestContainers - in workspaces the variables needs to be defined so we won't run
+# priviliged containers
+build --action_env=TESTCONTAINERS_RYUK_DISABLED
+
+# rules_bazel_integration_test
+# To update these lines, execute
+# `bazel run @rules_bazel_integration_test//tools:update_deleted_packages`
+build --deleted_packages=rules/bazel/publish-rules/test/test-project,rules/bazel/publish-rules/test/test-project/tools/go/nogo
+query --deleted_packages=rules/bazel/publish-rules/test/test-project,rules/bazel/publish-rules/test/test-project/tools/go/nogo
+
+# Build flag aliases; see https://bazel.build/extending/config#using-build-setting-aliases
+build --flag_alias=tidy_snapshot_query=//domains/api_platform/apps/tidy:snapshot-query
+
+# Allow tags like `no-remote-cache` in targets to propagate to its
+# ExecutionInfo.  See
+# https://docs.bazel.build/versions/5.4.1/be/common-definitions.html#common.tags
+# for options.
+build --experimental_allow_tags_propagation
+query --experimental_allow_tags_propagation
+
+# Load any settings & overrides specific to the current user from `/user.bazelrc`.
+#
+# This file should appear in `.gitignore` so that settings are not shared with team members. This
+# should be last statement in this config so the user configuration is able to overwrite flags from
+# this file. See https://bazel.build/configure/best-practices#bazelrc-file.
+try-import %workspace%/user.bazelrc

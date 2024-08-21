@@ -1,0 +1,19 @@
+##########################################################
+# Use `bazel test --config=zig` to enable these settings #
+##########################################################
+
+# Go cross compilation via zig cc (https://github.com/uber/bazel-zig-cc)
+# Use like 'bzl build --config=zig <target>
+build --incompatible_enable_cc_toolchain_resolution
+
+build:zig_linux_amd64 --platforms @zig_sdk//platform:linux_amd64
+build:zig_linux_amd64 --extra_toolchains @zig_sdk//toolchain:linux_amd64_gnu.2.31
+
+build:zig_linux_arm64 --platforms @zig_sdk//platform:linux_arm64
+build:zig_linux_arm64 --extra_toolchains @zig_sdk//toolchain:linux_arm64_gnu.2.31
+
+build:zig_darwin_amd64 --platforms @zig_sdk//platform:darwin_amd64
+build:zig_darwin_amd64 --extra_toolchains @zig_sdk//toolchain:darwin_amd64
+
+build:zig_darwin_arm64 --platforms @zig_sdk//platform:darwin_arm64
+build:zig_darwin_arm64 --extra_toolchains @zig_sdk//toolchain:darwin_arm64

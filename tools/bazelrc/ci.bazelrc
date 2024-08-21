@@ -1,0 +1,46 @@
+#########################################################
+# Use `bazel test --config=ci` to enable these settings #
+#########################################################
+
+# disabled until a docker socket is available in CI
+build:ci --build_tag_filters=-docker
+build:ci --test_tag_filters=-docker
+
+build:ci --announce_rc
+build:ci --show_timestamps
+query:ci --show_timestamps
+build:ci --curses=no
+query:ci --curses=no
+build:ci --show_progress_rate_limit=10
+query:ci --show_progress_rate_limit=10
+build:ci --color=yes
+query:ci --color=yes
+build:ci --terminal_columns=143
+query:ci --terminal_columns=143
+build:ci --define image.tag=ci
+
+# Only show failing test targets to avoid scrolling past a long list of
+# successful tests in order to see error logs.
+test:ci --test_summary=terse
+
+# Set an environment variable to indicate that we are running in CI.
+#
+# This is set to build:ci instead of test:ci to stop Bazel from discarding the
+# analysis cache between `run` and `test` invocations. This is rather surprising
+# behavior because `--test_env` is a no-op for the run command, but it is what it is.
+build:ci --test_env=CI=1
+
+#############################################################################
+# These settings are implicitly enabled by `bzl` in CI.                     #
+# Use `bazel test --config=ci_default` to enable these settings explicitly. #
+#############################################################################
+
+# Setting `flaky_test_attempts` to any number will attempt to run every test up to that number of times.
+# For example: `--flaky_test_attempts=3` will run a test up to 3 times (1 initial run + 2 retries).
+# The retry behavior applies to all tests,
+# not just tests with a `flaky = True` attribute.
+# For more background on why we decided on this approach,
+build:ci_default --flaky_test_attempts=5
+
+# Provide a way to determine if we're using the "ci" config via a bool_flag.
+build:ci_default --//rules/flags:ci

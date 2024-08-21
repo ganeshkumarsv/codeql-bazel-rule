@@ -1,0 +1,5 @@
+##################################################
+# Used to print warnings on all bazel executions #
+##################################################
+
+# build --unconditional_warning="<warning>"

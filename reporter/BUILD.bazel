@@ -1,0 +1,8 @@
+# BUILD
+load("//bazel_rule:codeql_scan.bzl", "codeql_scan")
+
+codeql_scan(
+    name = "scan_my_code",
+    srcs = ["main.go"],
+    importpath = "reporter",
+)

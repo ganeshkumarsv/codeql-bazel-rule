@@ -1,0 +1,33 @@
+build --action_env=DOCKER_API_VERSION
+build --action_env=DOCKER_CERT_PATH
+build --action_env=DOCKER_HOST
+build --action_env=DOCKER_MACHINE_NAME
+build --action_env=DOCKER_TLS_VERIFY
+
+# value definitions for test/build
+build --define bin.version=dev
+build --define image.tag=bazel
+build --define repo_tag=bazel
+
+# TODO: document why these exist
+build --define eventReplayer.consumer="placeholder"
+build --define eventReplayer.aggregateIDs="placeholder"
+
+# cnab-tools (domains/eee/cnab)
+build --define CREATE_NAMESPACE_TEST_ID=placeholder
+build --define MANUAL_JUDGEMENT_SLACK_CHANNEL=deployments-prompts
+build --define devenv_name=devenv-test
+build --define nginx-suffix=""
+build --define CONFORMANCE_WORKFLOW_KEY="test"
+build --define SKIP_MANUAL_JUDGEMENT_MONITOR_DEPLOYMENT=False
+build --define rules.tag=0.0.0-dev
+# defaulting CNAB deploys to using Temporal
+build --define cnab_workflow_driver=temporal
+
+# Provide empty default definitions for CNAB targets to allow cquery etc. to Just Work
+build --define image.digest="sha256:0000000000000000000000000000000000000000000000000000000000000000"
+
+# Provide a default local registry for the Build Fleet Kind-based end-to-end tests to push to.
+build --define build-fleet-kind-registry="localhost:50010"
+
+build --flag_alias=pyshell=//tools/python:shell_target

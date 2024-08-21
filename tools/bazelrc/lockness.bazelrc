@@ -1,0 +1,5 @@
+# Define a --config=lockness flag that can be passed to bazel to apply default config needed for Lockness
+# Doesn't affect any build or bazel call where the option is not passed
+
+build:lockness --//third_party/fdb:fdb_version=7_3
+build:lockness -c opt

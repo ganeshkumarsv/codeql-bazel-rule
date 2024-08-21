@@ -1,0 +1,27 @@
+# NOTE: only loaded from --bazelrc in tools/bazel.
+
+# DONT Include this file directly in other .bazelrc files.  Once these
+# go in, bazel will not allow you to override them; see
+# https://github.com/bazelbuild/bazel/issues/13603 for more details.
+
+
+# https://bazel.build/remote/caching#disk-cache Without this, there is _no_
+# local cross-build cache!
+#
+# If the Linux paths change, please update `LINUX_CACHE_DIRECTORY` in 
+# domains/language_tools/ci/bzl_disk_cache_test.bash to match.
+build:macos --disk_cache=~/Library/Caches/bazel/disk
+fetch:macos --disk_cache=~/Library/Caches/bazel/disk
+query:macos --disk_cache=~/Library/Caches/bazel/disk
+sync:macos  --disk_cache=~/Library/Caches/bazel/disk
+
+build:linux --disk_cache=~/.cache/bazel/disk
+fetch:linux --disk_cache=~/.cache/bazel/disk
+query:linux --disk_cache=~/.cache/bazel/disk
+sync:linux  --disk_cache=~/.cache/bazel/disk
+
+# https://bazel.build/run/build#repository-cache This is enabled already on
+# macOS, but uses /var/tmp which is cleared out on OS updates; just in case
+# anything else is clearing it out, we specify an alternate location
+common:macos --repository_cache=~/Library/Caches/bazel/repository
+common:linux --repository_cache=~/.cache/bazel/repository

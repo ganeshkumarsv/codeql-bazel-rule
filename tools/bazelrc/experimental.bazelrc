@@ -1,0 +1,14 @@
+###################################################
+# To use, set --config=rbe (not included in "all" #
+###################################################
+build:rbe --remote_instance_name="ci"
+query:rbe --remote_instance_name="ci"
+
+
+build:rbe --remote_retries="1"
+query:rbe --remote_retries="1"
+
+build:rbe --remote_timeout=600
+query:rbe --remote_timeout=600
+
+build:rbe --jobs=25

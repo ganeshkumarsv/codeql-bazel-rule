@@ -1,0 +1,11 @@
+genrule(
+    name = "mock_sh",
+    outs = ["mocks.sh"],
+    cmd = "echo 'echo \"hello!\"' > $@",
+    executable = True,
+)
+
+sh_test(
+    name = "mock_test",
+    srcs = [":mock_sh"],
+)

@@ -1,0 +1,52 @@
+############
+## Golang ##
+############
+
+# Makes go_test pass -test.v to tests:
+#     Verbose output: log all tests as they are run. Also print all
+#     text from Log and Logf calls even if the test succeeds.
+#
+# We set this on `build` instead of `test` because bazel surprisingly
+# made this flag a part of `build`, not `test`. When this flag changes,
+# which happens when switching between `bzl build` and `bzl test` if
+# this flag is set `test` instead of `build`, the analysis cache gets
+# discarded which leads to rebuilds.
+#
+# See https://github.com/bazelbuild/bazel/blob/release-5.4.1/src/main/java/com/google/devtools/build/lib/analysis/config/CoreOptions.java#L300-L316
+build --test_env=GO_TEST_WRAP_TESTV=1
+
+##########
+## Java ##
+##########
+
+build --java_language_version=21
+build --java_runtime_version=remotejdk_21
+build --tool_java_language_version=21
+build --tool_java_runtime_version=remotejdk_21
+
+# Unfortunately `maven_install` run coursier in a way that expect JAVA_HOME to be set
+# Temporary workaround for: https://github.com/bazelbuild/rules_jvm_external/issues/445
+common --repo_env=JAVA_HOME=../bazel_tools/jdk
+
+############
+## Python ##
+############
+
+# Do not automatically create `__init__.py` files in the runfiles of Python targets. Fixes the wrong
+# default that comes from Google's internal monorepo by using `__init__.py` to delimit a Python
+# package. Precisely, when a `py_binary` or `py_test` target has `legacy_create_init` set to `auto (the
+# default), it is treated as false if and only if this flag is set. See
+# https://github.com/bazelbuild/bazel/issues/10076.
+# Docs: https://bazel.build/reference/command-line-reference#flag--incompatible_default_to_explicit_init_py
+#
+# See the following issues for an explanation of this flag:
+# https://github.com/bazelbuild/rules_python/issues/55#issuecomment-403756388
+# https://github.com/bazelbuild/bazel/issues/7386
+build --incompatible_default_to_explicit_init_py
+
+##########
+## Rust ##
+##########
+
+# TODO: Verify this is still required
+common --repo_env=RULES_RUST_TOOLCHAIN_INCLUDE_RUSTC_SRCS=true

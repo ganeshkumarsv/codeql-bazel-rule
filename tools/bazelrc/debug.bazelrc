@@ -1,0 +1,38 @@
+############################################################
+# Use `bazel test --config=debug` to enable these settings #
+############################################################
+
+build:debug --verbose_failures
+build:debug --sandbox_debug
+build:debug --keep_going
+
+# This option tells Bazel to explicitly warn the user if a test's timeout is significantly longer
+# than the test's actual execution time. While a test's timeout should be set such that it is not
+# flaky, a test that has a highly over-generous timeout can hide real problems that crop up
+# unexpectedly.
+#
+# For instance, a test that normally executes in a minute or two should not have a timeout of
+# ETERNAL or LONG as these are much, much too generous.
+#
+# This option is useful to help users decide on a good timeout value or sanity check existing
+# timeout values.
+#
+# TODO: turn on for all configurations if https://github.com/bazelbuild/bazel/issues/13103 is ever
+# fixed.
+test:debug --test_verbose_timeout_warnings
+
+# Stream stdout/stderr output from each test in real-time.
+# Docs: https://bazel.build/docs/user-manual#test-output
+test:debug --test_output=streamed
+
+# Run one test at a time.
+# Docs: https://bazel.build/reference/command-line-reference#flag--test_strategy
+test:debug --test_strategy=exclusive
+
+# Prevent long running tests from timing out.
+# Docs: https://bazel.build/docs/user-manual#test-timeout
+test:debug --test_timeout=9999
+
+# Always run tests even if they have cached results.
+# Docs: https://bazel.build/docs/user-manual#cache-test-results
+test:debug --nocache_test_results

@@ -1,0 +1,51 @@
+# -*- bazelrc -*-
+
+# This one is needed otherwise Bazel seems to hang indefinitely
+# when trying to use our RBE instance
+build:unified-rbe-test-base --experimental_remote_execution_keepalive
+# We can't run nonhermetic tests in RBE, regardless of whether
+# that was intentional.
+build:unified-rbe-test-base --test_tag_filters=-nonhermetic-test
+
+# Cribbed from domains/language_tools/apps/bzl/ci.bazelrc:
+#
+# Disables remote caching and/or execution for a few actions:
+# * GoStdlib - see https://github.com/bazelbuild/rules_go/issues/2188 -- not efficient to cache or execute remotely
+# * NpmLifecycleHook   - FIXME(SDA-5065) -- Broken in RBE.  Seemed cheap enough to do locally empirically.
+# * GZIP               - rules_docker archive compression
+# * GUNZIP             - rules_docker archive decompression
+# * ImageLayer         - rules_docker container layer creation
+# * JoinLayers         - ditto
+# * SHA256             - rules_docker archive hashing -- not sure about this one
+# * OCIToolCreateLayer - other container layer stuff.  See also LANGTOOLS-2565.
+# * PackageTar         - archiving
+# * PackageZip         - archiving
+# * MakeDeb            - archiving;  May have uncacheable metadata.
+# * MakeRPM            - archiving;  May have uncacheable metadata.
+# * BootStrapGNUMake   - rules_foreign_cc stuff (probably used by rules_rust)
+# * Various CNAB-related actions
+# * CargoBuildScriptRun - See LANGTOOLS-2641
+# * Cdk8sRender         - FIXME(LANGTOOLS-2679) Incompatible with RBE
+# * ImageConfig         - Consumes docker images (containers generally incompatible with remote infra)
+#
+# Other things to consider are other large aggregates
+# (binaries/GoLink), and rules_foreign_cc executions.
+#
+# Why is this so large?  This argument does not accumulate.  Each
+# instance will completely clobber the others before it.  See also
+# LANGTOOLS-2566.
+
+# See
+# https://bazel.build/reference/command-line-reference#flag--modify_execution_info
+# for more details.
+build:unified-rbe-test-base --modify_execution_info='GoStdlib.*=+no-remote,NpmLifecycleHook=+no-remote,GUNZIP=+no-remote,GZIP=+no-remote,ImageLayer=+no-remote,JoinLayers=+no-remote,SHA256=+no-remote,OCIToolCreateLayer=+no-remote,PackageTar=+no-remote,PackageZip=+no-remote,MakeDeb=+no-remote,MakeRpm=+no-remote,BootStrapGNUMake=+no-remote-exec,ArtifactDigest=+no-remote-cache,FixArtifactMetadata=+no-remote,GenerateBundleJSON=+no-remote,PackageHelmChart=+no-remote,RenderHelmManifest=+no-remote,ResolveCNABAction=+no-remote,ResolveCNABWorkflow=+no-remote,WriteHelmOCIConfig=+no-remote,CargoBuildScriptRun=+no-remote-exec,Cdk8sRender=+no-remote-exec,ImageConfig=+no-remote'
+
+# This is intended to be a canary build for detecting issues in the
+# RBE cluster -- no fallbacks means obvious remoting failures.
+build:unified-rbe-test-pure-remote --config=unified-rbe-test-base
+
+# Like the above, but retry any actions that failed remotely locally
+# for any reason, including infra problems.  This configuration allows
+# our builds to be robust to infra problems or misconfiguration
+# potentially at the expense of performance.
+build:unified-rbe-test --config=unified-rbe-test-base --remote_local_fallback

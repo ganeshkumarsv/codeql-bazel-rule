@@ -1,0 +1,13 @@
+load("//bazel_rule:codeql_scan.bzl", "codeql_scan")
+load(":repositories.bzl", "toolchains")
+
+toolchains()
+
+filegroup(
+    name = "all_files",
+    srcs = [
+        ":BUILD.bazel",
+        ":codeql_scan.bzl",
+    ],
+    visibility = ["//visibility:public"],
+)
